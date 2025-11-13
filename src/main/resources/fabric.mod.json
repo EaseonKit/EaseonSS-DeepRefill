@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "easeon-ss-${mod_package}",
+  "version": "${version}",
+  "name": "EaseonSS - ${mod_name}",
+  "description": "${mod_description}",
+  "authors": [
+    "Teron"
+  ],
+  "contact": {
+    "homepage": "https://github.com/EaseonKit?tab=repositories&q=&type=&language=&sort=name",
+    "sources": "https://github.com/EaseonKit/EaseonSS-${mod_name}",
+    "issues": "https://github.com/EaseonKit/EaseonSS-${mod_name}/issues"
+  },
+  "license": "All Rights Reserved",
+  "icon": "assets/easeon/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.easeon.ss.${mod_package}.Easeon"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.9",
+    "java": ">=21",
+    "easeon-ss-core": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
