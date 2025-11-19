@@ -16,8 +16,8 @@ public class DeepRefillHelper {
 
     public static boolean isConsumptionChanged(EaseonItem before, EaseonItem after) {
         return before.not(after.getItem()) && (
-               before.of(Items.GLASS_BOTTLE, Items.BUCKET, Items.BOWL, Items.MAP) ||
-               after.of(Items.GLASS_BOTTLE, Items.BUCKET, Items.BOWL)
+               before.of(Items.GLASS_BOTTLE, Items.BUCKET, Items.WATER_BUCKET, Items.BOWL, Items.MAP) ||
+               after.of(Items.GLASS_BOTTLE, Items.BUCKET, Items.WATER_BUCKET, Items.BOWL)
             );
     }
 

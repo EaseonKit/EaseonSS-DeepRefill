@@ -48,8 +48,13 @@ public class DeepRefillHandler {
     // AFTER 이벤트들 - 저장된 아이템 정보로 리필 처리
     public static ActionResult onUseItemAfter(EaseonWorld world, EaseonPlayer player, Hand hand) {
         var actualItem = new EaseonItem(player.get().getStackInHand(hand));
+//        logger.info("onUseItemAfter-Before");
         if (world.isServer() && !actualItem.isFood()) {
             var snapshot = itemBeforeUse.remove(player.getUuid());
+
+//            logger.info("onUseItemAfter-Before: {} ({})", snapshot.stack.getName().getString(), snapshot.stack.getCount());
+//            logger.info("onUseItemAfter-After: {} ({})", actualItem.getName().getString(), actualItem.getCount());
+
             if (snapshot != null && (actualItem.isEmpty() || DeepRefillHelper.isConsumptionChanged(snapshot.stack, actualItem))) {
                 DeepRefillHelper.tryRefillItem(player, snapshot.stack, actualItem, hand);
             }
@@ -61,9 +66,13 @@ public class DeepRefillHandler {
     public static ActionResult onUseBlockAfter(EaseonWorld world, EaseonPlayer player, Hand hand, EaseonBlockHit hit) {
         var actualItem = player.getStackInHand(hand);
         var farmland = world.getBlockState(hit.getBlockPos());
-
+//        logger.info("onUseBlockAfter-Before");
         if (world.isServer() && (!actualItem.isFood() || (actualItem.easeonBlock().of(CropBlock.class) && farmland.of(Blocks.FARMLAND)))) {
             var snapshot = blockBeforeUse.remove(player.getUuid());
+
+//            logger.info("onUseBlockAfter-Before: {} ({})", snapshot.stack.getName().getString(), snapshot.stack.getCount());
+//            logger.info("onUseBlockAfter-After: {} ({})", actualItem.getName().getString(), actualItem.getCount());
+
             if (snapshot != null && (actualItem.isEmpty() || DeepRefillHelper.isConsumptionChanged(snapshot.stack, actualItem))) {
                 DeepRefillHelper.tryRefillItem(player, snapshot.stack, actualItem, hand);
             }
