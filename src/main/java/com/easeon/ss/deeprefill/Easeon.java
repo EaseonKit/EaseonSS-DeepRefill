@@ -4,6 +4,7 @@ import com.easeon.ss.core.api.common.base.BaseValueModule;
 import com.easeon.ss.core.api.definitions.enums.EventPhase;
 import com.easeon.ss.core.api.definitions.interfaces.EventTask;
 import com.easeon.ss.core.api.events.EaseonBlockUse;
+import com.easeon.ss.core.api.events.EaseonEntityInteract;
 import com.easeon.ss.core.api.events.EaseonFoodConsume;
 import com.easeon.ss.core.api.events.EaseonItemUse;
 import com.easeon.ss.core.api.registry.EaseonCommand;
@@ -11,7 +12,7 @@ import net.fabricmc.api.ModInitializer;
 
 public class Easeon extends BaseValueModule implements ModInitializer {
     public static Easeon instance;
-    private final EventTask[] tasks = new EventTask[6];
+    private final EventTask[] tasks = new EventTask[8];
 
     public Easeon() {
         super(7, 0, 7, false);
@@ -33,6 +34,8 @@ public class Easeon extends BaseValueModule implements ModInitializer {
             tasks[3] = EaseonFoodConsume.on(EventPhase.AFTER, DeepRefillHandler::onFoodConsumeAfter);
             tasks[4] = EaseonItemUse.on(EventPhase.BEFORE, DeepRefillHandler::onUseItemBefore);
             tasks[5] = EaseonItemUse.on(EventPhase.AFTER, DeepRefillHandler::onUseItemAfter);
+            tasks[6] = EaseonEntityInteract.on(EventPhase.BEFORE, DeepRefillHandler::onEntityInteractBefore);
+            tasks[7] = EaseonEntityInteract.on(EventPhase.AFTER, DeepRefillHandler::onEntityInteractAfter);
         }
         else if (config.value == 0 && tasks[0] != null) {
             for (int i = 0; i < tasks.length; i++) {

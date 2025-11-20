@@ -1,12 +1,10 @@
 package com.easeon.ss.deeprefill;
 
 import com.easeon.ss.core.util.system.EaseonLogger;
-import com.easeon.ss.core.wrapper.EaseonBlockHit;
-import com.easeon.ss.core.wrapper.EaseonItem;
-import com.easeon.ss.core.wrapper.EaseonPlayer;
-import com.easeon.ss.core.wrapper.EaseonWorld;
+import com.easeon.ss.core.wrapper.*;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
+import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import java.util.HashMap;
@@ -20,6 +18,7 @@ public class DeepRefillHandler {
     private static final Map<UUID, ItemStackSnapshot> itemBeforeUse = new HashMap<>();
     private static final Map<UUID, ItemStackSnapshot> blockBeforeUse = new HashMap<>();
     private static final Map<UUID, ItemStackSnapshot> foodBeforeConsume = new HashMap<>();
+    private static final Map<UUID, ItemStackSnapshot> entityInteract = new HashMap<>();
 
     public static ActionResult onUseItemBefore(EaseonWorld world, EaseonPlayer player, EaseonItem item, Hand hand) {
         if (world.isServer() && !item.isFood())
@@ -45,9 +44,20 @@ public class DeepRefillHandler {
         return ActionResult.PASS;
     }
 
+    public static ActionResult onEntityInteractBefore(EaseonWorld world, EaseonPlayer player, Hand hand, EaseonEntity entity) {
+        var item = player.getStackInHand(hand);
+//        logger.info("onEntityInteractBefore-Before");
+//        logger.info("onEntityInteractBefore-Before: {} ({})", item.getName().getString(), item.getCount());
+        if (world.isServer() && item.of(Items.BUCKET, Items.WATER_BUCKET)) {
+            entityInteract.put(player.getUuid(), new ItemStackSnapshot(item.copy(), hand));
+        }
+
+        return ActionResult.PASS;
+    }
+
     // AFTER 이벤트들 - 저장된 아이템 정보로 리필 처리
     public static ActionResult onUseItemAfter(EaseonWorld world, EaseonPlayer player, Hand hand) {
-        var actualItem = new EaseonItem(player.get().getStackInHand(hand));
+        var actualItem = player.getStackInHand(hand);
 //        logger.info("onUseItemAfter-Before");
         if (world.isServer() && !actualItem.isFood()) {
             var snapshot = itemBeforeUse.remove(player.getUuid());
@@ -93,6 +103,23 @@ public class DeepRefillHandler {
         return ActionResult.PASS;
     }
 
+    public static ActionResult onEntityInteractAfter(EaseonWorld world, EaseonPlayer player, Hand hand, EaseonEntity entity) {
+//        logger.info("onEntityInteractAfter-After");
+        var actualItem = player.getStackInHand(hand);
+        if (world.isServer()) {
+            var snapshot = entityInteract.remove(player.getUuid());
+
+//            logger.info("onEntityInteractAfter-Before: {} ({})", snapshot.stack.getName().getString(), snapshot.stack.getCount());
+//            logger.info("onEntityInteractAfter-After: {} ({})", actualItem.getName().getString(), actualItem.getCount());
+
+            if (snapshot != null && DeepRefillHelper.isConsumptionChanged(snapshot.stack, actualItem)) {
+                DeepRefillHelper.tryRefillItem(player, snapshot.stack, actualItem, hand);
+            }
+        }
+        return ActionResult.PASS;
+    }
+
+    @SuppressWarnings("ClassCanBeRecord")
     private static class ItemStackSnapshot {
         final EaseonItem stack;
         final Hand hand;
