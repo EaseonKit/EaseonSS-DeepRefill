@@ -4,7 +4,6 @@ import com.easeon.ss.core.util.system.EaseonLogger;
 import com.easeon.ss.core.wrapper.*;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
-import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 
@@ -75,10 +74,26 @@ public class DeepRefillHandler {
         var item = player.getStackInHand(hand);
 //        logger.info("onEntityInteractBefore-Before");
 //        logger.info("onEntityInteractBefore-Before: {} ({})", item.getName().getString(), item.getCount());
-        if (world.isServer() && item.of(Items.BUCKET, Items.WATER_BUCKET)) {
+        if (world.isServer()) {
             entityInteract.put(player.getUuid(), new ItemStackSnapshot(item.copy(), hand));
         }
 
+        return ActionResult.PASS;
+    }
+
+    public static ActionResult onEntityInteractAfter(EaseonWorld world, EaseonPlayer player, Hand hand, EaseonEntity entity) {
+//        logger.info("onEntityInteractAfter-After");
+        var actualItem = player.getStackInHand(hand);
+        if (world.isServer()) {
+            var snapshot = entityInteract.remove(player.getUuid());
+
+//            logger.info("onEntityInteractAfter-Before: {} ({})", snapshot.stack.getName().getString(), snapshot.stack.getCount());
+//            logger.info("onEntityInteractAfter-After: {} ({})", actualItem.getName().getString(), actualItem.getCount());
+
+            if (snapshot != null && (actualItem.isEmpty() || DeepRefillHelper.isConsumptionChanged(snapshot.stack, actualItem))) {
+                DeepRefillHelper.tryRefillItem(player, snapshot.stack, actualItem, hand);
+            }
+        }
         return ActionResult.PASS;
     }
 
@@ -130,21 +145,7 @@ public class DeepRefillHandler {
         return ActionResult.PASS;
     }
 
-    public static ActionResult onEntityInteractAfter(EaseonWorld world, EaseonPlayer player, Hand hand, EaseonEntity entity) {
-//        logger.info("onEntityInteractAfter-After");
-        var actualItem = player.getStackInHand(hand);
-        if (world.isServer()) {
-            var snapshot = entityInteract.remove(player.getUuid());
 
-//            logger.info("onEntityInteractAfter-Before: {} ({})", snapshot.stack.getName().getString(), snapshot.stack.getCount());
-//            logger.info("onEntityInteractAfter-After: {} ({})", actualItem.getName().getString(), actualItem.getCount());
-
-            if (snapshot != null && DeepRefillHelper.isConsumptionChanged(snapshot.stack, actualItem)) {
-                DeepRefillHelper.tryRefillItem(player, snapshot.stack, actualItem, hand);
-            }
-        }
-        return ActionResult.PASS;
-    }
 
     @SuppressWarnings("ClassCanBeRecord")
     private static class ItemStackSnapshot {

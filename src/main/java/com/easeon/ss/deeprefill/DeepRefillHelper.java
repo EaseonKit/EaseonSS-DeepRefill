@@ -46,6 +46,10 @@ public class DeepRefillHelper {
     /// 플레이어 인벤토리
     private static EaseonItem searchInInventory(PlayerInventory inventory, EaseonItem item) {
         for (int i = 0; i < inventory.size(); i++) {
+            if (i >= 36 && i <= 39) {
+                continue;
+            }
+
             var slot = new EaseonItem(inventory.getStack(i));
             if (ItemHelper.isSameItem(slot, item) && !slot.isEmpty()) {
                 var found = slot.copy();
