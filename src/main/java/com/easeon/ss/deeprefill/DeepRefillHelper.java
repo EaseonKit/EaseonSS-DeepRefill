@@ -5,11 +5,11 @@ import com.easeon.ss.core.helper.ItemHelper;
 import com.easeon.ss.core.util.system.EaseonLogger;
 import com.easeon.ss.core.wrapper.EaseonItem;
 import com.easeon.ss.core.wrapper.EaseonPlayer;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.util.Hand;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class DeepRefillHelper {
     private static final EaseonLogger logger = EaseonLogger.of();
@@ -22,7 +22,7 @@ public class DeepRefillHelper {
     }
 
     /// 손에 들고 있는 아이템 재충전 (BlockUse, ItemUse용)
-    public static void tryRefillItem(EaseonPlayer player, EaseonItem usedItem, EaseonItem item, Hand hand) {
+    public static void tryRefillItem(EaseonPlayer player, EaseonItem usedItem, EaseonItem item, InteractionHand hand) {
         EaseonItem found = null;
         if (InventoryType.of(Easeon.instance.config.value, InventoryType.PLAYER))
             found = searchInInventory(player.getInventory(), usedItem);
@@ -34,26 +34,33 @@ public class DeepRefillHelper {
             found = searchInEnderChest(player, usedItem);
 
         if (found != null) {
+            logger.info("tryRefillItem: {}", found.getItemName().getString());
             player.setStackInHand(hand, found.copy());
             if (!item.isEmpty()) {
                 player.giveOrDropItem(item, 1);
-//                logger.info("tryRefillItem: {}", item.getName().getString());
+//                logger.info("tryRefillItem: {}", item.getItemName().getString());
             }
-            player.get().playerScreenHandler.syncState();
+            logger.info("tryRefillItem: {}", item.getItemName().getString());
+            player.get().containerMenu.broadcastFullState();
         }
+        else {
+            logger.info("tryRefillItem: null");
+        }
+
+
     }
 
     /// 플레이어 인벤토리
-    private static EaseonItem searchInInventory(PlayerInventory inventory, EaseonItem item) {
-        for (int i = 0; i < inventory.size(); i++) {
+    private static EaseonItem searchInInventory(Inventory inventory, EaseonItem item) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             if (i >= 36 && i <= 39) {
                 continue;
             }
 
-            var slot = new EaseonItem(inventory.getStack(i));
+            var slot = new EaseonItem(inventory.getItem(i));
             if (ItemHelper.isSameItem(slot, item) && !slot.isEmpty()) {
                 var found = slot.copy();
-                inventory.setStack(i, ItemStack.EMPTY);
+                inventory.setItem(i, ItemStack.EMPTY);
                 return found;
             }
         }
@@ -61,16 +68,16 @@ public class DeepRefillHelper {
     }
 
     /// 인벤토리의 셜커박스
-    private static EaseonItem searchInShulkerBoxes(PlayerInventory inventory, EaseonItem target) {
-        for (int i = 0; i < inventory.size(); i++) {
-            var shulker = new EaseonItem(inventory.getStack(i));
+    private static EaseonItem searchInShulkerBoxes(Inventory inventory, EaseonItem target) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            var shulker = new EaseonItem(inventory.getItem(i));
             if (shulker.isIn(ItemTags.SHULKER_BOXES)) {
                 var shulkerBoxInventory = ItemHelper.getShulkerBoxInventory(shulker);
-                for (int j = 0; j < inventory.size(); j++) {
-                    var slot = new EaseonItem(shulkerBoxInventory.getStack(j));
+                for (int j = 0; j < 27; j++) {
+                    var slot = new EaseonItem(shulkerBoxInventory.get(j));
                     if (ItemHelper.isSameItem(slot, target) && !slot.isEmpty()) {
                         var found = slot.copy();
-                        shulkerBoxInventory.setStack(j, ItemStack.EMPTY);
+                        shulkerBoxInventory.set(j, ItemStack.EMPTY);
                         ItemHelper.saveShulkerBoxInventory(shulker, shulkerBoxInventory);
                         return found;
                     }
@@ -83,11 +90,11 @@ public class DeepRefillHelper {
     ///  엔더상자
     private static EaseonItem searchInEnderChest(EaseonPlayer player, EaseonItem target) {
         var inventory = player.get().getEnderChestInventory();
-        for (int i = 0; i < inventory.size(); i++) {
-            var slot = new EaseonItem(inventory.getStack(i));
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            var slot = new EaseonItem(inventory.getItem(i));
             if (ItemHelper.isSameItem(slot, target) && !slot.isEmpty()) {
                 var found = slot.copy();
-                inventory.setStack(i, ItemStack.EMPTY);
+                inventory.setItem(i, ItemStack.EMPTY);
                 return found;
             }
         }
